@@ -8,6 +8,8 @@
 
 #import "ViewController.h"
 
+#import "RunJSViewController.h"
+
 @interface ViewController ()
 
 @end
@@ -17,7 +19,14 @@
 - (void)viewDidLoad {
     [super viewDidLoad];
     // Do any additional setup after loading the view, typically from a nib.
+
+    self.title = @"Home";
 }
 
+- (IBAction)jumpToNextVC:(id)sender {
+
+   RunJSViewController *vc = [[RunJSViewController alloc] init];
+    [self.navigationController pushViewController:vc animated:YES];
+}
 
 @end
