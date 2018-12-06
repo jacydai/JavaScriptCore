@@ -29,5 +29,20 @@
     return point;
 }
 
+- (void)myPointWithX:(double)x y:(double)y {
+
+    self.x = x;
+    self.y = y;
+}
+
+- (NSString *)pointDesc {
+
+    return [NSString stringWithFormat:@"x = %f y = %f",self.x, self.y];
+}
+
+- (NSString *)descExport {
+
+    return [self pointDesc];
+}
 
 @end

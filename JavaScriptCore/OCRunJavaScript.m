@@ -32,6 +32,7 @@
     if (self =[super init]) {
 
         self.context = [[JSContext alloc] init];
+        [self baseJSCodeLoad];// 加载本地js
 
         // JSVirtualMachine
         self.vm = [[JSVirtualMachine alloc] init];
@@ -49,6 +50,20 @@
     
     // OC --> JS   function
 //    [self callJavaScriptFunctions];
+}
+
+// 加载基本的js代码
+- (void)baseJSCodeLoad {
+
+    NSString *jsCode = javaScriptText();
+    [self.context evaluateScript:jsCode];
+
+    // log
+    //    __weak id weakSelf; typeof(self);
+    self.context[@"ocLog"] = ^(id log) {
+        //        __strong id strongSelf typeof(self);
+        [self ocLog:log];
+    };
 }
 
 #pragma mark - Objective-C ---->JavaScript
@@ -125,6 +140,73 @@
     return ocColor;
 }
 
+// Waring: Caveats
+// Avoid capturing JSValues
+// Prefer passing as arguments
+// Avoid capturing JSContexts
+//    Use + [JSContext currentContext]
+
+//    Bad
+//    JSContext *context = [[JSContext alloc] init];
+//    context[@"callback"] = ^{
+//        JSValue *object = [JSValue valueWithNewObjectInContext:context];
+//        object[@"x"] = 2;
+//        object[@"y"] = 3;
+//        return object;
+//    };
+- (void)badCallbackDemo {
+
+    //    JSContext *context = [[JSContext alloc] init];
+    self.context[@"callback"] = ^{
+        JSValue *object = [JSValue valueWithNewObjectInContext:self.context];
+        object[@"x"] = @(2);
+        object[@"y"] = @(3);
+        return object;
+    };
+
+//    NSString *jsCode = javaScriptText();
+//    [self.context evaluateScript:jsCode];
+    [self baseJSCodeLoad];
+    JSValue *function = self.context[@"jscallback"];
+
+    JSValue *jsResult = [function callWithArguments:nil];
+    id result = [jsResult toObject];
+    NSLog(@"OC jsResult %@",result);
+
+}
+
+//    Good
+//    JSContext *context = [[JSContext alloc] init];
+//    context[@"callback"] = ^{
+//        JSValue *object = [JSValue valueWithNewObjectInContext:
+//                           [JSContext currentContext]];
+//        object[@"x"] = 2;
+//        object[@"y"] = 3;
+//        return object;
+//    };
+- (void)goodCallbackDemo {
+
+
+    //    JSContext *context = [[JSContext alloc] init];
+    self.context[@"callback"] = ^{
+        JSValue *object = [JSValue valueWithNewObjectInContext:[JSContext currentContext]];
+        object[@"x"] = @(2);
+        object[@"y"] = @(3);
+        return object;
+    };
+
+//    NSString *jsCode = javaScriptText();
+//    [self.context evaluateScript:jsCode];
+    [self baseJSCodeLoad];
+
+    JSValue *function = self.context[@"jscallback"];
+
+    JSValue *jsResult = [function callWithArguments:nil];
+    id result = [jsResult toObject];
+    NSLog(@"OC jsResult %@",result);
+}
+
+
 
 /*
     <pre>
@@ -181,7 +263,14 @@
 
 // 2. Converting to Objective-C Types
 - (void)convertOCTypeValues {
-    
+
+    [self baseJSCodeLoad];
+////    __weak id weakSelf; typeof(self);
+//    self.context[@"ocLog"] = ^(id log) {
+////        __strong id strongSelf typeof(self);
+//        [self ocLog:log];
+//    };
+//
     [self.context evaluateScript:@"var color = {red:230, green:90, blue:100}"];
 
     //js->native
@@ -352,94 +441,47 @@
      */
 //    @property (copy) NSString *name NS_AVAILABLE(10_10, 8_0);
 
-#pragma mark - JSVirtual Machine
 
-// Waring: Caveats
-// Avoid capturing JSValues
-    // Prefer passing as arguments
-// Avoid capturing JSContexts
-//    Use + [JSContext currentContext]
-
-//    Bad
-//    JSContext *context = [[JSContext alloc] init];
-//    context[@"callback"] = ^{
-//        JSValue *object = [JSValue valueWithNewObjectInContext:context];
-//        object[@"x"] = 2;
-//        object[@"y"] = 3;
-//        return object;
-//    };
-- (void)badCallbackDemo {
-
-//    JSContext *context = [[JSContext alloc] init];
-    self.context[@"callback"] = ^{
-            JSValue *object = [JSValue valueWithNewObjectInContext:self.context];
-            object[@"x"] = @(2);
-            object[@"y"] = @(3);
-            return object;
-    };
-
-    NSString *jsCode = javaScriptText();
-    [self.context evaluateScript:jsCode];
-    JSValue *function = self.context[@"JSCallback"];
-
-    JSValue *color = [function callWithArguments:nil];
-    id ocColor = [color toObject];
-    NSLog(@"OC Color %@",ocColor);
-
-}
-
-//    Good
-//    JSContext *context = [[JSContext alloc] init];
-//    context[@"callback"] = ^{
-//        JSValue *object = [JSValue valueWithNewObjectInContext:
-//                           [JSContext currentContext]];
-//        object[@"x"] = 2;
-//        object[@"y"] = 3;
-//        return object;
-//    };
-- (void)goodCallbackDemo {
-
-
-    //    JSContext *context = [[JSContext alloc] init];
-    self.context[@"callback"] = ^{
-        JSValue *object = [JSValue valueWithNewObjectInContext:[JSContext currentContext]];
-        object[@"x"] = @(2);
-        object[@"y"] = @(3);
-        return object;
-    };
-
-    NSString *jsCode = javaScriptText();
-    [self.context evaluateScript:jsCode];
-    JSValue *function = self.context[@"JSCallback"];
-
-    JSValue *color = [function callWithArguments:nil];
-    id ocColor = [color toObject];
-    NSLog(@"OC Color %@",ocColor);
-}
-
-
+#pragma mark - JSExport
 
 // JSExport
 // Easy way for JavaScript to interact with Objective-C objects
     
 - (void)runJSExportObject {
 
-    NSString *jsCode = javaScriptText();
-    JSValue *evalValue = [self.context evaluateScript:jsCode];
+//    NSString *jsCode = javaScriptText();
+//    JSValue *evalValue = [self.context evaluateScript:jsCode];
 
+//    [self baseJSCodeLoad];
     MyPoint *point1 = [MyPoint makePointWithX:0 y:0];
     MyPoint *point2 = [MyPoint makePointWithX:1.0 y:1.0];
 
+    // 1. 对象方法
     JSValue *function = self.context[@"euclideanDistance"];
     JSValue *result = [function callWithArguments:@[point1,point2]];
 
-    NSLog(@"result %@",result);
+    NSLog(@"euclideanDistance JS result %@",result);
 
+    // 2. 静态方法
     self.context[@"MyPoint"] = [MyPoint class];
     JSValue *function2 = self.context[@"midpoint"];
     JSValue *jsResult = [function2 callWithArguments:@[point1, point2]];
     MyPoint *midpoint = [jsResult toObject];
-    NSLog(@"midpoint %@",midpoint);
+    NSLog(@"midpoint JS result %@",midpoint);
+
+
+}
+
+- (void)runJSExportObject2 {
+
+    MyPoint *point = [MyPoint makePointWithX:10 y:20];
+    self.context[@"mypoint"] = point;
+
+//    [self.context evaluateScript:@"log(mypoint.description())"];
+
+//   JSValue *result = [self.context evaluateScript:@"log(mypoint.pointDesc())"];
+    JSValue *result = [self.context evaluateScript:@"mypoint.descExport()"];
+    NSLog(@"result %@",[result toObject]);
 }
 
 // Enumeration of methods and properties to export to javaScript
@@ -447,6 +489,15 @@
     // @property --> JavaScript getter/setter
     // Instance method --> JavaScript function
     // Class methods --> JavaScript functions on global class object
-    
+
+#pragma mark - JSVirtual Machine
+
+#pragma mark - Log 方法
+
+- (void)ocLog:(id)word {
+
+    NSLog(@"\n==========JS===========\n %@ \n==========JS===========\n",word);
+}
+
 
 @end

@@ -94,6 +94,13 @@ var jscallback = function() {
     return callback();
 };
 
+// 7. log 方法
+var log = function(word) {
+
+
+    return ocLog(word)
+};
+
 );
 
     return processJSCode;

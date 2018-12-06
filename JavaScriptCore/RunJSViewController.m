@@ -78,16 +78,23 @@
 - (void)changeBlueColor {
 
     [self changeColor:@"blue"];
-//    [self.javaScript  goodCallbackDemo];
+    // Memory management
+    // Good call
+    [self.javaScript  goodCallbackDemo];
 }
 
 - (void)changeOtherColor {
 
-    [self changeColor:@"random"];
+//    [self changeColor:@"random"];
 
+    // Memory management
+    // Bad call
 //    [self.javaScript badCallbackDemo];
 
-    [self.javaScript runJSExportObject];
+    // JSExport
+//    [self.javaScript runJSExportObject];
+
+    [self.javaScript runJSExportObject2];
 }
 
 - (void)changeColor:(NSString *)colorStr {

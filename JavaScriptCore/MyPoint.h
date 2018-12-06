@@ -18,13 +18,15 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, assign) double y;
 
 - (NSString *)description;
-
+- (NSString *)descExport;
 + (MyPoint *)makePointWithX:(double)x y:(double)y;
 
 @end
 
 @interface MyPoint : NSObject <MyPointExports>
 
+//- (void)myPointWithX:(double)x y:(double)y;
+- (NSString *)pointDesc;
 @end
 
 NS_ASSUME_NONNULL_END

@@ -45,6 +45,7 @@ NS_ASSUME_NONNULL_BEGIN
  JSExport 协议做对象互传
  */
 - (void)runJSExportObject;
+- (void)runJSExportObject2;
 @end
 
 NS_ASSUME_NONNULL_END
