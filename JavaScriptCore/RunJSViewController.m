@@ -66,7 +66,13 @@
 
 - (void)changeRedColor {
 
-    [self changeColor:@"red"];
+    // 1.OC --- JS
+//    [OCRunJavaScript nativeEvaluateJS];
+    // 2. JS---OC
+//    [self changeColor:@"red"];
+    // 3. JSValue convert
+    [self.javaScript runJSCode];
+    
 }
 
 - (void)changeBlueColor {

@@ -13,6 +13,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface OCRunJavaScript : NSObject
 
+// OC -- JS
 + (void)nativeEvaluateJS;
 
 // 执行JS代码

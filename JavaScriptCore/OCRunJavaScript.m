@@ -44,18 +44,88 @@
 
 + (void)nativeEvaluateJS {
 
-    [self callJavaScriptFunctions];
+    // OC --> JS
+    [self baseJSCode];
+    
+    // OC --> JS   function
+//    [self callJavaScriptFunctions];
 }
 
+#pragma mark - Objective-C ---->JavaScript
 + (void)baseJSCode {
-    JSContext *content = [[JSContext alloc] init];
+    JSContext *context = [[JSContext alloc] init];
 
     NSString *jsStr = @"var a = 20; var b = 30; a+b;";
 
-    JSValue *result = [content evaluateScript:jsStr];
+    JSValue *result = [context evaluateScript:jsStr];
 
     NSLog(@"a + b = %d",[result toInt32]);
+    
+    
+    NSLog(@"a = %@", [context objectForKeyedSubscript:@"a"]);
+    NSLog(@"a = %@", [context.globalObject objectForKeyedSubscript:@"a"]);
+    NSLog(@"a = %@", context[@"a"]);
 }
+
+
++ (void)callJavaScriptFunctions {
+    
+    //    NSString *functionStr = @"   var factorial = function(n) { if (n < 0) { return; } if (n === 0) { return 1;} return n * factorial(n - 1); }";
+    
+    //    JSManagedValue
+    NSString *facttorial = javaScriptText();
+    JSContext *content = [[JSContext alloc] init];
+    [content evaluateScript:facttorial];
+    
+    JSValue *function = content[@"factorial"];
+    
+    JSValue *result = [function callWithArguments:@[@(5)]];
+    NSLog(@"factorial(10) = %d", [result toInt32]);
+}
+
+- (void)callJavaScriptFunctions {
+    
+    //    NSString *functionStr = @"   var factorial = function(n) { if (n < 0) { return; } if (n === 0) { return 1;} return n * factorial(n - 1); }";
+    
+    //    JSManagedValue
+    NSString *facttorial = javaScriptText();
+    //    JSContext *content = [[JSContext alloc] init];
+    [self.context evaluateScript:facttorial];
+    
+    JSValue *function = self.context[@"factorial"];
+    
+    JSValue *result = [function callWithArguments:@[@(5)]];
+    NSLog(@"factorial(10) = %d", [result toInt32]);
+}
+
+#pragma mark - JavaScript ----> Objective-C
+
+// Blocks
+// 1.Easy way to expose Objective-C code to JavaScript
+// 2. Automatically wraps Objective-C block inside callable JavaScript function
+- (UIColor *)changeColorsWithJS:(NSString *)colorStr {
+    
+    self.context[@"makeUIColor"] = ^(NSDictionary *rgb) {
+        
+        float r = [rgb[@"red"] floatValue];
+        float g = [rgb[@"green"] floatValue];
+        float b = [rgb[@"blue"] floatValue];
+        
+        return [UIColor colorWithRed:(r / 255.0) green:(g / 255.0) blue:(b / 255.0) alpha:1.0];
+    };
+    
+    NSString *jsCode = javaScriptText();
+    [self.context evaluateScript:jsCode];
+    JSValue *function = self.context[@"colorForWord"];
+    
+    JSValue *color = [function callWithArguments:@[colorStr]];
+    id ocColor = [color toObject];
+    NSLog(@"OC Color %@",ocColor);
+    
+    return ocColor;
+}
+
+
 /*
     <pre>
     @textblock
@@ -74,20 +144,6 @@
     @/textblock
     </pre>
  */
-+ (void)callJavaScriptFunctions {
-
-//    NSString *functionStr = @"   var factorial = function(n) { if (n < 0) { return; } if (n === 0) { return 1;} return n * factorial(n - 1); }";
-
-//    JSManagedValue
-    NSString *facttorial = javaScriptText();
-    JSContext *content = [[JSContext alloc] init];
-    [content evaluateScript:facttorial];
-
-    JSValue *function = content[@"factorial"];
-
-    JSValue *result = [function callWithArguments:@[@(5)]];
-    NSLog(@"factorial(10) = %d", [result toInt32]);
-}
 
 
 - (void)runJSCode {
@@ -102,22 +158,11 @@
 
     // OC Color
 //    [self changeColorsWithJS];
+    
+    // JSValue Type
+    [self convertOCTypeValues];
 }
 
-- (void)callJavaScriptFunctions {
-
-    //    NSString *functionStr = @"   var factorial = function(n) { if (n < 0) { return; } if (n === 0) { return 1;} return n * factorial(n - 1); }";
-
-    //    JSManagedValue
-    NSString *facttorial = javaScriptText();
-//    JSContext *content = [[JSContext alloc] init];
-    [self.context evaluateScript:facttorial];
-
-    JSValue *function = self.context[@"factorial"];
-
-    JSValue *result = [function callWithArguments:@[@(5)]];
-    NSLog(@"factorial(10) = %d", [result toInt32]);
-}
 
 #pragma mark - JSValue
 
@@ -135,7 +180,28 @@
 }
 
 // 2. Converting to Objective-C Types
+- (void)convertOCTypeValues {
+    
+    [self.context evaluateScript:@"var color = {red:230, green:90, blue:100}"];
 
+    //js->native
+    JSValue *colorValue = self.context[@"color"];
+    NSLog(@"r=%@, g=%@, b=%@", colorValue[@"red"], colorValue[@"green"], colorValue[@"blue"]);
+
+    NSDictionary *colorDic = [colorValue toDictionary];
+    NSLog(@"r=%@, g=%@, b=%@", colorDic[@"red"], colorDic[@"green"], colorDic[@"blue"]);
+    
+    //native->js
+    self.context[@"color"] = @{@"red":@(2), @"green":@(2), @"blue":@(3)};
+//   JSValue *jsValue =
+    // 疑问，为什么不能打印？？？？？
+    [self.context evaluateScript:@"log('jsr:'+color.red+'jsg:'+color.green+' jsb:'+color.blue)"];
+    
+//    NSLog(@"jsValue %@",jsValue);
+    JSValue *jsValue = [self.context.globalObject objectForKeyedSubscript:@"color"];
+     NSLog(@"color = %@", [jsValue toDictionary]);
+    
+}
 // 3. Accessing properties
 
 // 4. Checking javaScript types
@@ -287,34 +353,6 @@
 //    @property (copy) NSString *name NS_AVAILABLE(10_10, 8_0);
 
 #pragma mark - JSVirtual Machine
-
-
-#pragma mark - JavaScript ----> Objective-C
-
-// Blocks
-// 1.Easy way to expose Objective-C code to JavaScript
-// 2. Automatically wraps Objective-C block inside callable JavaScript function
-- (UIColor *)changeColorsWithJS:(NSString *)colorStr {
-
-    self.context[@"makeUIColor"] = ^(NSDictionary *rgb) {
-
-        float r = [rgb[@"red"] floatValue];
-        float g = [rgb[@"green"] floatValue];
-        float b = [rgb[@"blue"] floatValue];
-
-        return [UIColor colorWithRed:(r / 255.0) green:(g / 255.0) blue:(b / 255.0) alpha:1.0];
-    };
-
-    NSString *jsCode = javaScriptText();
-    [self.context evaluateScript:jsCode];
-    JSValue *function = self.context[@"colorForWord"];
-
-    JSValue *color = [function callWithArguments:@[colorStr]];
-    id ocColor = [color toObject];
-    NSLog(@"OC Color %@",ocColor);
-
-    return ocColor;
-}
 
 // Waring: Caveats
 // Avoid capturing JSValues
