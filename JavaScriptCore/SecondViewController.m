@@ -35,20 +35,20 @@
     JSContext *context = [self.webView valueForKeyPath:@"documentView.webView.mainFrame.javaScriptContext"];
 
     NSLog(@"context %@",context);
-    NSLog(@"all properties %@",[self getAllPropertiesAndVaules]);
+//    NSLog(@"all properties %@",[self getAllPropertiesAndVaules]);
    NSString *jsStr = [self.webView stringByEvaluatingJavaScriptFromString:@"var a = 10; var b = 20; a+b"];
 
-//    JSContext *context2 = [self.webView valueForKeyPath:@"documentView.webView.mainFrame.javaScriptContext"];
-//
-//    context2[@"myConsole"] = @"123413";
-//
-//    JSValue *function = context2[@"onClickHandler"];
-//
-//    JSValue *color = [function callWithArguments:nil];
-//
-//    NSLog(@"value %@",color);
-//
-//    NSLog(@"context 2 %@",context2);
+    JSContext *context2 = [self.webView valueForKeyPath:@"documentView.webView.mainFrame.javaScriptContext"];
+
+    context2[@"myConsole"] = @"123413";
+
+    JSValue *function = context2[@"onClickHandler"];
+
+    JSValue *color = [function callWithArguments:nil];
+
+    NSLog(@"value %@",color);
+
+    NSLog(@"context 2 %@",context2);
     NSLog(@"jsStr %@",jsStr);
 }
 

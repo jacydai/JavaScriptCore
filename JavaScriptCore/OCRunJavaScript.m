@@ -46,10 +46,10 @@
 + (void)nativeEvaluateJS {
 
     // OC --> JS
-    [self baseJSCode];
-    
+//    [self baseJSCode];
+
     // OC --> JS   function
-//    [self callJavaScriptFunctions];
+    [self callJavaScriptFunctions];
 }
 
 // 加载基本的js代码
@@ -59,9 +59,20 @@
     [self.context evaluateScript:jsCode];
 
     // log
-    //    __weak id weakSelf; typeof(self);
+    __weak id weakSelf = self;
     self.context[@"ocLog"] = ^(id log) {
-        //        __strong id strongSelf typeof(self);
+        __strong id strongSelf = weakSelf;
+        [strongSelf ocLog:log];
+    };
+}
+
+- (void)baseJSCodeLoad:(JSContext *)context {
+
+    NSString *jsCode = javaScriptText();
+    [context evaluateScript:jsCode];
+
+    // log
+    context[@"ocLog"] = ^(id log) {
         [self ocLog:log];
     };
 }
@@ -479,8 +490,8 @@
 
 //    [self.context evaluateScript:@"log(mypoint.description())"];
 
-//   JSValue *result = [self.context evaluateScript:@"log(mypoint.pointDesc())"];
-    JSValue *result = [self.context evaluateScript:@"mypoint.descExport()"];
+   JSValue *result = [self.context evaluateScript:@"log(mypoint.pointDesc())"];
+//    JSValue *result = [self.context evaluateScript:@"mypoint.descExport()"];
     NSLog(@"result %@",[result toObject]);
 }
 
@@ -491,7 +502,39 @@
     // Class methods --> JavaScript functions on global class object
 
 #pragma mark - JSVirtual Machine
+- (void)virtualMachineDemo {
 
+//    JSContext *context = [[CustomJSContext alloc] init];
+//    JSContext *context1 = [[CustomJSContext alloc] init];
+    JSContext *context3 = [[JSContext alloc] initWithVirtualMachine:self.vmContext.virtualMachine];
+
+    // 加载log
+    [self baseJSCodeLoad:context3];
+    [self baseJSCodeLoad:self.vmContext];
+
+    NSLog(@"start");
+    dispatch_async(dispatch_get_global_queue(0, 0), ^{
+
+        sleep(1);
+        [self.context evaluateScript:@"log('track1 context')"];
+    });
+
+    dispatch_async(dispatch_get_global_queue(0, 0), ^{
+
+        sleep(3);
+        [self.vmContext evaluateScript:@"log('track2 vmContext')"];
+    });
+    dispatch_async(dispatch_get_global_queue(0, 0), ^{
+
+        sleep(1);
+        [context3 evaluateScript:@"log('track3 vmContext3')"];
+    });
+
+
+    [self.vmContext evaluateScript:@"sleep(5)"];
+
+    NSLog(@"end");
+}
 #pragma mark - Log 方法
 
 - (void)ocLog:(id)word {

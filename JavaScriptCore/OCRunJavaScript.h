@@ -46,6 +46,10 @@ NS_ASSUME_NONNULL_BEGIN
  */
 - (void)runJSExportObject;
 - (void)runJSExportObject2;
+
+
+
+- (void)virtualMachineDemo;
 @end
 
 NS_ASSUME_NONNULL_END

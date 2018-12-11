@@ -71,8 +71,11 @@
     // 2. JS---OC
 //    [self changeColor:@"red"];
     // 3. JSValue convert
-    [self.javaScript runJSCode];
-    
+//    [self.javaScript runJSCode];
+
+    // 4. VM demo
+    [self.javaScript virtualMachineDemo];
+
 }
 
 - (void)changeBlueColor {
@@ -85,16 +88,16 @@
 
 - (void)changeOtherColor {
 
-//    [self changeColor:@"random"];
+    [self changeColor:@"random"];
 
     // Memory management
     // Bad call
-//    [self.javaScript badCallbackDemo];
+    [self.javaScript badCallbackDemo];
 
     // JSExport
 //    [self.javaScript runJSExportObject];
 
-    [self.javaScript runJSExportObject2];
+//    [self.javaScript runJSExportObject2];
 }
 
 - (void)changeColor:(NSString *)colorStr {
